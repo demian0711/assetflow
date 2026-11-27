@@ -1,44 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router'
+import type { Session } from './auth/api'
 
-const messages = {
-  checking: 'Checking API connection…',
-  connected: 'API connected',
-  unavailable: 'API unavailable',
-}
+const LoginPage = lazy(() => import('./auth/LoginPage'))
+const Workspace = lazy(() => import('./Workspace'))
 
-function App() {
-  const [status, setStatus] = useState<keyof typeof messages>('checking')
+export default function App() {
+  const queryClient = useQueryClient()
+  const [session, setSession] = useState<Session | null>(null)
+  const logout = useCallback(() => {
+    setSession(null)
+    queryClient.clear()
+  }, [queryClient])
 
   useEffect(() => {
-    const controller = new AbortController()
-    const { signal } = controller
+    if (!session) return
 
-    async function checkHealth() {
-      try {
-        const response = await fetch('/health/live', { signal, cache: 'no-store' })
-        const health = response.ok ? await response.json() : null
-
-        if (!signal.aborted) {
-          setStatus(health?.status === 'healthy' ? 'connected' : 'unavailable')
-        }
-      } catch {
-        if (!signal.aborted) {
-          setStatus('unavailable')
-        }
-      }
+    const expiration = Date.parse(session.expiresAtUtc)
+    const logoutIfExpired = () => {
+      if (Date.now() >= expiration) logout()
     }
-
-    void checkHealth()
-
-    return () => controller.abort()
-  }, [])
+    const timer = window.setTimeout(logoutIfExpired, Math.max(0, expiration - Date.now()))
+    window.addEventListener('focus', logoutIfExpired)
+    return () => {
+      window.removeEventListener('focus', logoutIfExpired)
+      window.clearTimeout(timer)
+    }
+  }, [logout, session])
 
   return (
-    <main>
-      <h1>AssetFlow</h1>
-      <p role="status">{messages[status]}</p>
-    </main>
+    <Suspense fallback={<main className="workspace-feedback" role="status">Loading…</main>}>
+      <Routes>
+        <Route path="/" element={session ? <Workspace session={session} onLogout={logout} /> : <Navigate to="/login" replace />} />
+        <Route path="/login" element={session ? <Navigate to="/" replace /> : <LoginPage onLogin={setSession} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
-
-export default App

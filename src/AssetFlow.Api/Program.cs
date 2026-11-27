@@ -1,21 +1,44 @@
+using AssetFlow.Api.Auth;
 using AssetFlow.Api.Data;
 using AssetFlow.Api.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 
 var connectionString = DatabaseConfiguration.GetConnectionString(builder.Configuration);
 builder.Services.AddDbContext<AssetFlowDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddIdentityCore<User>(options => options.User.RequireUniqueEmail = true)
     .AddRoles<IdentityRole>()
+    .AddSignInManager()
     .AddEntityFrameworkStores<AssetFlowDbContext>();
+
+var tokens = new JwtTokens(builder.Configuration);
+builder.Services.AddSingleton(tokens);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.IncludeErrorDetails = false;
+        options.TokenValidationParameters = tokens.ValidationParameters;
+    });
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthRoles.Employee, policy => policy.RequireRole(AuthRoles.Employee))
+    .AddPolicy(AuthRoles.Admin, policy => policy.RequireRole(AuthRoles.Admin))
+    .AddPolicy(AuthRoles.WorkspaceMember, policy => policy.RequireRole(AuthRoles.Employee, AuthRoles.Admin));
 
 builder.Services.AddHealthChecks().AddDbContextCheck<AssetFlowDbContext>("postgresql");
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment() && app.Configuration.GetValue<bool>("DemoSeed:Enabled"))
 {

@@ -1,3 +1,4 @@
+using AssetFlow.Api.Auth;
 using AssetFlow.Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +9,9 @@ internal static class DemoDataSeeder
 {
     private static readonly (string Email, string Role)[] Accounts =
     [
-        ("admin@assetflow.test", "Admin"),
-        ("employee1@assetflow.test", "Employee"),
-        ("employee2@assetflow.test", "Employee")
+        ("admin@assetflow.test", AuthRoles.Admin),
+        ("employee1@assetflow.test", AuthRoles.Employee),
+        ("employee2@assetflow.test", AuthRoles.Employee)
     ];
 
     private static readonly (string Name, string Code, string Device)[] Inventory =
