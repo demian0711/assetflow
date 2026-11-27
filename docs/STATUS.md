@@ -69,6 +69,26 @@ Assets là trang mặc định sau đăng nhập. Employee xem danh sách, tìm 
 node --env-file=.env --test tests/assets.test.mjs
 ```
 
+## My Requests đã kiểm chứng ngày 2026-11-27
+
+Employee tạo yêu cầu Pending, xem và lọc danh sách của mình trong My Requests. API lấy chủ sở hữu từ JWT và kiểm tra purpose từ 1 đến 500 ký tự. Chi tiết mở ngay sau khi tạo. Timeline hiển thị sự kiện đã lưu trong AuditEvents. Employee có thể hủy yêu cầu Pending hoặc Approved của mình.
+
+| Lệnh hoặc kiểm tra | Kết quả |
+| --- | --- |
+| `dotnet build AssetFlow.slnx -c Release` | Thành công, 0 cảnh báo và 0 lỗi. |
+| `dotnet ef migrations has-pending-model-changes --no-build --configuration Release --project src/AssetFlow.Api` | Model khớp migration snapshot. |
+| `npm run lint`, `npm run typecheck` và `npm run build` trong `web/` | Đều thành công. |
+| `node --test tests/assets.test.mjs tests/requests.test.mjs` với PostgreSQL 17.12 tạm | Qua 4/4. Employee A tạo được yêu cầu với purpose 500 ký tự và giữ quyền sở hữu khi body chứa ID của B. Employee B nhận 404 khi xem hoặc hủy yêu cầu đó. Purpose rỗng, toàn dấu cách hoặc 501 ký tự trả 400. |
+| Kiểm tra hủy và audit trên PostgreSQL | Hai lần hủy đồng thời cho cùng một yêu cầu trả 200 và 409. Hủy lặp trả 409 và timeline chỉ có một sự kiện RequestCancelled. Yêu cầu Approved hủy được, Issued giữ nguyên trạng thái khi thử hủy. Audit lưu đúng Employee đã thao tác. |
+| Chrome 1440px với bản build production | Xác nhận danh sách, ngày tạo, bộ lọc, validation cạnh trường, khóa Submit khi đợi phản hồi, chỉ gửi một POST, tự mở chi tiết và cập nhật timeline sau hủy. |
+| Chrome 390px với bản build production | Menu thu gọn mở được My Requests. Employee B thấy danh sách trống và drawer New Request vừa khung. |
+
+Để chạy lại test HTTP, dùng API kết nối database demo thử nghiệm. Bài test tạo và giữ lại một yêu cầu đã hủy để kiểm tra audit.
+
+```bash
+node --env-file=.env --test tests/requests.test.mjs
+```
+
 ## Quy tắc chuyển trạng thái cho chặng nghiệp vụ
 
 - Yêu cầu bắt đầu ở `Pending`. Admin có thể duyệt sang `Approved` hoặc từ chối sang `Rejected`. Employee có thể hủy yêu cầu của mình từ `Pending` hoặc `Approved` trước khi cấp phát.

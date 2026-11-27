@@ -8,6 +8,7 @@ const Workspace = lazy(() => import('./Workspace'))
 const Overview = lazy(() => import('./Overview'))
 const AssetsPage = lazy(() => import('./inventory/AssetsPage'))
 const CategoriesPage = lazy(() => import('./inventory/CategoriesPage'))
+const RequestsPage = lazy(() => import('./requests/RequestsPage'))
 
 export default function App() {
   const queryClient = useQueryClient()
@@ -33,12 +34,13 @@ export default function App() {
   }, [logout, session])
 
   return (
-    <Suspense fallback={<main className="workspace-feedback" role="status">Loading…</main>}>
+    <Suspense fallback={<main className="workspace-feedback" role="status">Loadingâ€¦</main>}>
       <Routes>
         <Route element={session ? <Workspace session={session} onLogout={logout} /> : <Navigate to="/login" replace />}>
           <Route index element={<Navigate to="/assets" replace />} />
           <Route path="assets" element={<AssetsPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="requests/:id?" element={<RequestsPage />} />
           <Route path="overview" element={<Overview />} />
         </Route>
         <Route path="login" element={session ? <Navigate to="/assets" replace /> : <LoginPage onLogin={setSession} />} />

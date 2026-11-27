@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using AssetFlow.Api.Auth;
 using AssetFlow.Api.Data;
 using AssetFlow.Api.Models;
@@ -27,7 +28,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = tokens.ValidationParameters;
     });
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(AuthRoles.Employee, policy => policy.RequireRole(AuthRoles.Employee))
+    .AddPolicy(AuthRoles.Employee, policy => policy.RequireRole(AuthRoles.Employee).RequireClaim(JwtRegisteredClaimNames.Sub))
     .AddPolicy(AuthRoles.Admin, policy => policy.RequireRole(AuthRoles.Admin))
     .AddPolicy(AuthRoles.WorkspaceMember, policy => policy.RequireRole(AuthRoles.Employee, AuthRoles.Admin));
 

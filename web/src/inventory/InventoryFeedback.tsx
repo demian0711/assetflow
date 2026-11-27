@@ -11,6 +11,6 @@ export function InventoryError({ children, onRetry }: { children: string; onRetr
   )
 }
 
-export function InventorySkeleton() {
-  return <div className="inventory-skeleton" role="status" aria-label="Loading inventory"><Skeleton active paragraph={{ rows: 5 }} /></div>
+export function InventorySkeleton({ label = 'Loading inventory' }: { label?: string }) {
+  return <div className="inventory-skeleton" role="status" aria-label={label}><Skeleton active paragraph={{ rows: 5 }} /></div>
 }
