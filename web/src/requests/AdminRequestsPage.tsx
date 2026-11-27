@@ -78,7 +78,11 @@ function AdminRequestDetails({ token, id }: { token: string; id: number }) {
   })
 
   function refresh() {
-    void cache.invalidateQueries({ queryKey: adminRequestKeys.root, refetchType: 'all' })
+    void cache.invalidateQueries({
+      queryKey: adminRequestKeys.root,
+      predicate: query => query.queryKey[1] !== 'available',
+      refetchType: 'all',
+    })
     void cache.invalidateQueries({ queryKey: ['requests'] })
     void cache.invalidateQueries({ queryKey: inventoryKeys.assets })
   }

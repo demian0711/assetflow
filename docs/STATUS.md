@@ -143,3 +143,22 @@ Audit History hiện hiển thị sự kiện vòng đời yêu cầu và retire
 - Khi cấp phát yêu cầu `Approved`, Admin chọn thiết bị `Available` đúng danh mục. Trong cùng transaction, chuyển yêu cầu sang `Issued` và thiết bị sang `InUse`. Database cho phép một yêu cầu `Issued` trên mỗi thiết bị.
 - Khi nhận trả, Admin chuyển yêu cầu sang `Returned` và thiết bị sang `Available` trong cùng transaction. Giữ tham chiếu thiết bị trong yêu cầu đã trả để lưu lịch sử.
 - Admin có thể chuyển thiết bị `Available` sang `Retired`. Thiết bị `Retired` và yêu cầu `Rejected`, `Cancelled` hoặc `Returned` đã ở trạng thái cuối.
+
+
+## Bước 9 — Đóng gói và bàn giao ngày 2026-11-27
+
+- Profile `full` chạy PostgreSQL 17, API .NET 10 và web qua Nginx tại `http://localhost:8080`. API tự áp dụng migration khi khởi động trong Compose và seed demo khi bật cờ trong `.env`. PostgreSQL dùng volume hiện có. Cách phát triển với PostgreSQL Docker, API cổng 5080 và Vite cổng 5173 vẫn hoạt động.
+- Docker Desktop bị treo khi ổ C gần đầy. Đã khởi động lại Docker Desktop và WSL backend, rồi tải lại đúng lớp cache .NET SDK bị lỗi. PostgreSQL dùng lại volume cũ và báo Healthy.
+- Chrome chạy bản Docker ở 1440 × 930. Employee tạo yêu cầu #3, Admin duyệt và cấp `DEMO-LAP-001`, Employee thấy máy trong Assigned Assets. Sau khi Admin nhận trả, máy về Available và rời Assigned Assets. Dashboard và Audit History hiển thị sự kiện nhận trả. Tải lại `/assets` và `/admin/requests/3` trả 200 và trở về đúng trang sau khi đăng nhập lại.
+- Đã sửa lượt gọi danh sách thiết bị dư sau khi cấp phát gây 409 trong console. Lượt kiểm tra Chrome cuối không có lỗi console. Ba ảnh thật nằm trong `docs/screenshots/` và được liên kết trong README tiếng Anh.
+- GitHub Actions chạy kiểm tra cho push và pull request. Job backend dùng PostgreSQL 17 riêng. Kết quả trên runner GitHub sẽ có sau khi push.
+
+| Lệnh hoặc kiểm tra | Kết quả |
+| --- | --- |
+| `docker compose --profile full up -d --build` và `docker compose --profile full ps` | Build thành công. Các service db, api và web báo Healthy. |
+| `/health/live` và `/health/ready` qua Nginx cổng 8080 | HTTP 200. Readiness của API cổng 5080 và qua Vite cổng 5173 cũng trả 200. |
+| Khởi động API container với database trống riêng | Áp dụng `InitialCreate` và `AddRequestLifecycle`, hoàn tất seed demo, API Healthy. |
+| `dotnet build AssetFlow.slnx -c Release` | Qua, 0 cảnh báo và 0 lỗi. |
+| `dotnet test AssetFlow.slnx -c Release --no-build` | Qua 4/4 trên PostgreSQL 17 riêng, gồm `Concurrent_issue_same_available_asset_after_both_reads_allows_exactly_one`. |
+| `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build` | Đều qua bằng Git Bash với bản cài dependency mới. Lint bao gồm `src` và `vite.config.ts`. |
+| `actionlint .github/workflows/ci.yml` | Qua kiểm tra tĩnh tại máy. |

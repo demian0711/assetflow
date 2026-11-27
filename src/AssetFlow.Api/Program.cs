@@ -41,6 +41,18 @@ app.UseStatusCodePages();
 app.UseAuthentication();
 app.UseAuthorization();
 
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    if (!tokens.IsConfigured)
+    {
+        throw new InvalidOperationException("Set Jwt__SigningKey before starting the full demo profile.");
+    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var database = scope.ServiceProvider.GetRequiredService<AssetFlowDbContext>();
+    await database.Database.MigrateAsync();
+}
+
 if (app.Environment.IsDevelopment() && app.Configuration.GetValue<bool>("DemoSeed:Enabled"))
 {
     var password = app.Configuration["DemoSeed:Password"];

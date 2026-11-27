@@ -1,33 +1,71 @@
 # AssetFlow
 
-AssetFlow là ứng dụng nội bộ để quản lý thiết bị IT. Employee xin thiết bị và Admin duyệt, cấp phát, nhận thiết bị trả lại. Phiên bản hiện tại có đăng nhập, giao diện quản trị và màn hình tổng quan tài khoản lấy từ API.
+AssetFlow is an internal IT equipment management app. Employees browse equipment, request an asset by category, track their requests, and see their assigned devices. Admins manage inventory, approve or reject requests, issue devices, receive returns, and review the audit history.
 
-## Yêu cầu
+## Screenshots
 
-- .NET 10 SDK
-- Node.js 22.14 trở lên và npm
-- Docker có Docker Compose
+**Admin dashboard** with inventory counts and recent activity.
 
-## Chạy local từ Git Bash
+![AssetFlow admin dashboard](docs/screenshots/dashboard.png)
 
-Tại gốc repo, tạo cấu hình local, chạy PostgreSQL 17 và áp dụng migration.
+**Assets** filtered to laptops, with stock status and inventory actions.
+
+![AssetFlow assets list](docs/screenshots/assets.png)
+
+**Request detail** showing a returned laptop and the full request timeline.
+
+![AssetFlow returned request detail](docs/screenshots/request-detail.png)
+
+## Stack
+
+- ASP.NET Core and .NET 10, Identity, JWT bearer authentication, EF Core, and Npgsql
+- React, TypeScript, Vite, Ant Design, React Router, and TanStack Query
+- PostgreSQL 17, Docker Compose, Nginx, and GitHub Actions
+
+## Run the Docker demo
+
+Install Docker Desktop with Compose, Git, and Node.js 22.14 or later. Open Git Bash and run:
 
 ```bash
+git clone https://github.com/demian0711/assetflow.git
+cd assetflow
 node scripts/setup-env.mjs --add-jwt-key
+```
+
+In VS Code, open the generated `.env` and set `DemoSeed__Enabled=true`. From the repository root, run:
+
+```bash
+docker compose --profile full up -d --build
+docker compose --profile full ps
+curl -fsS http://localhost:8080/health/ready
+```
+
+Open [AssetFlow](http://localhost:8080). PostgreSQL starts first, the API applies migrations and seeds demo data, and Nginx serves the React app and proxies `/api` and `/health`. Compose keeps PostgreSQL data in a named volume. Reuse the same generated database credentials with that volume. Git ignores `.env`, and Compose supplies its secrets at runtime.
+
+| Role | Email |
+| --- | --- |
+| Admin | `admin@assetflow.test` |
+| Employee | `employee1@assetflow.test` |
+| Employee | `employee2@assetflow.test` |
+
+Open `.env` locally and copy the value after `DemoSeed__Password=` into the password field. The seed uses that value when it first creates the demo accounts. It adds four categories and 24 devices and can run again without duplicating them.
+
+To demo the lifecycle, submit a request as an Employee, then sign in as Admin to approve and issue a device from the selected category. Check **Assigned Assets** as the Employee. Sign in as Admin to receive the return and view the result in **Dashboard** and **Audit History**. Reloading a page clears the in-memory session. After sign-in, the app reopens that page.
+
+To stop the demo and keep its data, run `docker compose --profile full stop`.
+
+## Run in development
+
+Install the .NET 10 SDK as well. Use Git Bash from the repository root after generating `.env` as shown above.
+
+```bash
 docker compose up -d --wait db
 dotnet tool restore
 bash scripts/db-update.sh
-```
-
-Script tạo `.env` từ `.env.example`. Với `.env` đã có, cờ `--add-jwt-key` chỉ thêm khóa JWT nếu chưa có, giữ nguyên các giá trị PostgreSQL và demo. Lệnh chạy thường, không có cờ, giữ nguyên tệp đã tồn tại. Compose lưu dữ liệu trong named volume và mở PostgreSQL tại `127.0.0.1:5434`. Giữ mật khẩu PostgreSQL đã sinh khi dùng lại volume đó.
-
-Để tạo tài khoản demo, đặt `DemoSeed__Enabled=true` trong `.env` sau khi áp dụng migration. Mở terminal thứ nhất tại gốc repo và chạy API.
-
-```bash
 bash scripts/dev-api.sh
 ```
 
-Mở terminal thứ hai tại gốc repo và chạy frontend.
+In a second Git Bash terminal at the repository root, run:
 
 ```bash
 cd web
@@ -35,43 +73,23 @@ npm ci
 npm run dev
 ```
 
-Mở [AssetFlow](http://localhost:5173) rồi đăng nhập. API chạy tại `http://localhost:5080`. Vite dùng `strictPort` ở cổng `5173` và chuyển tiếp `/api` cùng `/health` vào API.
+Open [Vite](http://localhost:5173). Vite proxies API and health requests to `http://localhost:5080`. PostgreSQL listens on `127.0.0.1:5434`.
 
-## Tài khoản demo local
+## Build and test
 
-Seed tạo các tài khoản Identity dưới đây, 4 danh mục và 24 thiết bị. Seed chạy khi bật cờ trong môi trường Development. Chạy lại sẽ giữ các tài khoản và thiết bị đã tạo.
-
-| Vai trò | Email |
-| --- | --- |
-| Admin | `admin@assetflow.test` |
-| Employee | `employee1@assetflow.test` |
-| Employee | `employee2@assetflow.test` |
-
-Các tài khoản dùng chung mật khẩu `DemoSeed__Password` trong `.env`. Xem mật khẩu trên máy bằng `grep '^DemoSeed__Password=' .env`. Seed dùng mật khẩu này khi tạo từng tài khoản lần đầu.
-
-## Đăng nhập và kiểm tra API
-
-- `POST /api/auth/login` nhận `email` và `password`, trả JWT có hạn 30 phút.
-- `GET /api/auth/me` nhận header `Authorization: Bearer <token>` và trả thông tin tài khoản cho người có vai trò `Employee` hoặc `Admin`. Thiếu token hoặc token không hợp lệ trả 401. Token hợp lệ thiếu vai trò phù hợp trả 403.
-- React giữ token trong bộ nhớ. Tải lại trang hoặc hết hạn sẽ đưa bạn về màn hình đăng nhập. Nút **Sign out** xóa token và cache TanStack Query.
+From the repository root, build the solution and create a dedicated database for integration tests. Run `createdb` once per test database. Use the local `POSTGRES_USER` and `POSTGRES_PASSWORD` from `.env` in the connection string.
 
 ```bash
-curl -i http://localhost:5080/api/auth/me
-curl -fsS http://localhost:5080/health/live
-curl -fsS http://localhost:5080/health/ready
-```
+dotnet build AssetFlow.slnx -c Release
+docker compose exec -T db sh -c 'createdb -U "$POSTGRES_USER" assetflow_integration'
+ASSETFLOW_TEST_DB='Host=127.0.0.1;Port=5434;Database=assetflow_integration;Username=<local-user>;Password=<local-password>' \
+  dotnet test AssetFlow.slnx -c Release --no-build
 
-Lệnh đầu trả 401. Hai endpoint health trả 200 và `{"status":"healthy"}` khi API và PostgreSQL đang chạy. Nếu PostgreSQL dừng trong khi API còn chạy, liveness vẫn trả 200 và readiness trả 503.
-
-## Build và kiểm tra mã nguồn
-
-Chạy các lệnh sau từ gốc repo.
-
-```bash
-dotnet build AssetFlow.slnx
 cd web
 npm ci
 npm run lint
 npm run typecheck
 npm run build
 ```
+
+GitHub Actions runs these backend and frontend checks on pushes and pull requests. The backend job starts its own PostgreSQL 17 service.
