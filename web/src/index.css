@@ -108,6 +108,12 @@ h1 {
   margin: 0 var(--space-1) var(--space-4);
 }
 
+.workspace nav[aria-label='Main navigation'],
+.ant-drawer nav[aria-label='Main navigation'] {
+  display: grid;
+  gap: var(--space-1);
+}
+
 .nav-link {
   display: flex;
   align-items: center;

@@ -1,17 +1,25 @@
-import { DashboardOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, DashboardOutlined, InboxOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, Card, Drawer, Grid, Result, Spin, Tag } from 'antd'
+import { Avatar, Button, Drawer, Grid, Result, Spin, Tag } from 'antd'
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router'
-import { ApiError, getCurrentUser, type CurrentUser, type Session } from './auth/api'
+import { NavLink, Outlet } from 'react-router'
+import { ApiError, getCurrentUser, type Session } from './auth/api'
 import { Brand } from './Brand'
 
-const accountDate = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
-
-function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+function Navigation({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Main navigation">
-      <NavLink className="nav-link" to="/" end onClick={onNavigate}>
+      <NavLink className="nav-link" to="/assets" onClick={onNavigate}>
+        <InboxOutlined aria-hidden="true" />
+        Assets
+      </NavLink>
+      {isAdmin && (
+        <NavLink className="nav-link" to="/categories" onClick={onNavigate}>
+          <AppstoreOutlined aria-hidden="true" />
+          Categories
+        </NavLink>
+      )}
+      <NavLink className="nav-link" to="/overview" onClick={onNavigate}>
         <DashboardOutlined aria-hidden="true" />
         Overview
       </NavLink>
@@ -19,7 +27,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function MobileNavigation() {
+function MobileNavigation({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -34,33 +42,9 @@ function MobileNavigation() {
         onClick={() => setOpen(true)}
       />
       <Drawer title={<Brand />} placement="left" size={248} open={open} onClose={close}>
-        <Navigation onNavigate={close} />
+        <Navigation isAdmin={isAdmin} onNavigate={close} />
       </Drawer>
     </>
-  )
-}
-
-function Overview({ user }: { user: CurrentUser }) {
-  return (
-    <main className="workspace-content">
-      <h1>Overview</h1>
-      <Card className="account-card" title={<h2>Account</h2>}>
-        <dl className="account-details">
-          <div>
-            <dt>Email</dt>
-            <dd>{user.email ?? 'Unavailable'}</dd>
-          </div>
-          <div>
-            <dt>{user.roles.length === 1 ? 'Role' : 'Roles'}</dt>
-            <dd>{user.roles.join(', ') || 'Unassigned'}</dd>
-          </div>
-          <div>
-            <dt>Member since</dt>
-            <dd>{accountDate.format(new Date(user.createdAtUtc))}</dd>
-          </div>
-        </dl>
-      </Card>
-    </main>
   )
 }
 
@@ -97,14 +81,15 @@ export default function Workspace({ session, onLogout }: { session: Session; onL
   }
 
   const user = profile.data
+  const isAdmin = user.roles.includes('Admin')
   return (
     <div className="workspace">
       <aside className="sidebar">
         <Brand />
-        <Navigation />
+        <Navigation isAdmin={isAdmin} />
       </aside>
       <header className="workspace-header">
-        {!screens.md && <MobileNavigation />}
+        {!screens.md && <MobileNavigation isAdmin={isAdmin} />}
         <div className="header-account">
           <Avatar className="account-avatar" icon={<UserOutlined />} />
           <div className="header-identity">
@@ -116,7 +101,7 @@ export default function Workspace({ session, onLogout }: { session: Session; onL
           <span className="sign-out-label">Sign out</span>
         </Button>
       </header>
-      <Overview user={user} />
+      <Outlet context={{ user, isAdmin, accessToken: session.accessToken }} />
     </div>
   )
 }

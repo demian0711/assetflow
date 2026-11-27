@@ -48,6 +48,27 @@
 
 Xem [README](../README.md) để chạy lại trên máy local. Màn hình Overview hiển thị dữ liệu tài khoản. Dashboard nghiệp vụ sẽ được triển khai khi API có dữ liệu.
 
+## Assets và Categories đã kiểm chứng ngày 2026-11-27
+
+Assets là trang mặc định sau đăng nhập. Employee xem danh sách, tìm theo tên hoặc mã, lọc theo danh mục và trạng thái. Admin có thêm thao tác tạo, sửa thiết bị và danh mục, cùng thao tác retire thiết bị Available. API xử lý bộ lọc và phân trang trên PostgreSQL. Giao diện về trang 1 khi đổi bộ lọc và tải lại dữ liệu sau khi lưu.
+
+| Lệnh hoặc kiểm tra | Kết quả |
+| --- | --- |
+| `dotnet build AssetFlow.slnx -c Release` | Thành công, 0 cảnh báo và 0 lỗi. |
+| `dotnet ef migrations has-pending-model-changes --no-build --configuration Release --project src/AssetFlow.Api` | Model khớp migration snapshot. |
+| `npm run lint`, `npm run typecheck` và `npm run build` trong `web/` | Đều thành công. |
+| `node --test tests/assets.test.mjs` với API và seed trong PostgreSQL 17.12 tạm | Qua 2/2. Mã thiết bị trùng trả 409 kèm lỗi tại trường. Employee xem được danh sách và nhận 403 khi gọi API tạo thiết bị. |
+| Kiểm tra API bổ sung | Xác nhận phân trang ổn định, tìm theo tên/mã, lọc kết hợp, validation 400, mã trùng khi sửa trả 409 và Employee nhận 403 ở mọi thao tác quản trị. Thiết bị InUse bị chặn đổi danh mục và retire. |
+| Kiểm tra sau retire trên PostgreSQL | Thiết bị vẫn là bản ghi cũ với trạng thái Retired. Yêu cầu Returned trước đó vẫn liên kết với thiết bị và có đúng một audit event retire. |
+| Chrome 1440px với bản build production | Skeleton, lỗi tải và Retry, reset trang khi lọc, trạng thái trống, thêm/sửa danh mục và thiết bị, validation cạnh trường, xác nhận retire và tải lại bảng đều hoạt động. |
+| Chrome 390px với bản build production | Employee xem danh sách và dùng menu thu gọn. Bảng cuộn ngang trong vùng riêng, trang không tràn ngang. |
+
+Để chạy lại hai kiểm thử HTTP, khởi động API local với dữ liệu demo theo [README](../README.md), sau đó chạy từ gốc repo.
+
+```bash
+node --env-file=.env --test tests/assets.test.mjs
+```
+
 ## Quy tắc chuyển trạng thái cho chặng nghiệp vụ
 
 - Yêu cầu bắt đầu ở `Pending`. Admin có thể duyệt sang `Approved` hoặc từ chối sang `Rejected`. Employee có thể hủy yêu cầu của mình từ `Pending` hoặc `Approved` trước khi cấp phát.
