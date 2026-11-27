@@ -1,0 +1,107 @@
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.dashboard-metrics .ant-statistic-content {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-content {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.report-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+}
+
+.report-section-heading h2,
+.category-chart h2 {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.category-bars {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.category-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+.category-bars li > span:last-of-type {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.category-track {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--accent-light);
+}
+
+.category-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.audit-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto auto;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.audit-actor {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1050px) {
+  .dashboard-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+
+  .dashboard-metrics .ant-card-body,
+  .audit-filters,
+  .report-section-heading {
+    padding: var(--space-2);
+  }
+
+  .audit-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+
+  .audit-filters > :first-child {
+    grid-column: 1 / -1;
+  }
+}

@@ -6,6 +6,8 @@ import type { Session } from './auth/api'
 const LoginPage = lazy(() => import('./auth/LoginPage'))
 const Workspace = lazy(() => import('./Workspace'))
 const Overview = lazy(() => import('./Overview'))
+const DashboardPage = lazy(() => import('./reporting/DashboardPage'))
+const AuditHistoryPage = lazy(() => import('./reporting/AuditHistoryPage'))
 const AssetsPage = lazy(() => import('./inventory/AssetsPage'))
 const CategoriesPage = lazy(() => import('./inventory/CategoriesPage'))
 const RequestsPage = lazy(() => import('./requests/RequestsPage'))
@@ -36,7 +38,7 @@ export default function App() {
   }, [logout, session])
 
   return (
-    <Suspense fallback={<main className="workspace-feedback" role="status">LoadingĂ¢â‚¬Â¦</main>}>
+    <Suspense fallback={<main className="workspace-feedback" role="status">Loading…</main>}>
       <Routes>
         <Route element={session ? <Workspace session={session} onLogout={logout} /> : <Navigate to="/login" replace />}>
           <Route index element={<Navigate to="/assets" replace />} />
@@ -45,6 +47,8 @@ export default function App() {
           <Route path="requests/:id?" element={<RequestsPage />} />
           <Route path="admin/requests/:id?" element={<AdminRequestsPage />} />
           <Route path="assigned-assets" element={<AssignedAssetsPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="admin/audit" element={<AuditHistoryPage />} />
           <Route path="overview" element={<Overview />} />
         </Route>
         <Route path="login" element={session ? <Navigate to="/assets" replace /> : <LoginPage onLogin={setSession} />} />

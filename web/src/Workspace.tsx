@@ -1,4 +1,4 @@
-import { AppstoreOutlined, AuditOutlined, DashboardOutlined, FileTextOutlined, InboxOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, AuditOutlined, DashboardOutlined, FileTextOutlined, InboxOutlined, HistoryOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Drawer, Grid, Result, Spin, Tag } from 'antd'
 import { useEffect, useState } from 'react'
@@ -9,6 +9,10 @@ import { Brand } from './Brand'
 function Navigation({ isAdmin, isEmployee, onNavigate }: { isAdmin: boolean; isEmployee: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Main navigation">
+      <NavLink className="nav-link" to="/dashboard" onClick={onNavigate}>
+        <DashboardOutlined aria-hidden="true" />
+        Dashboard
+      </NavLink>
       <NavLink className="nav-link" to="/assets" onClick={onNavigate}>
         <InboxOutlined aria-hidden="true" />
         Assets
@@ -37,9 +41,15 @@ function Navigation({ isAdmin, isEmployee, onNavigate }: { isAdmin: boolean; isE
           Categories
         </NavLink>
       )}
+      {isAdmin && (
+        <NavLink className="nav-link" to="/admin/audit" onClick={onNavigate}>
+          <HistoryOutlined aria-hidden="true" />
+          Audit History
+        </NavLink>
+      )}
       <NavLink className="nav-link" to="/overview" onClick={onNavigate}>
-        <DashboardOutlined aria-hidden="true" />
-        Overview
+        <UserOutlined aria-hidden="true" />
+        Account
       </NavLink>
     </nav>
   )
@@ -80,7 +90,7 @@ export default function Workspace({ session, onLogout }: { session: Session; onL
   }, [onLogout, status])
 
   if (status === 401 || profile.isPending) {
-    return <main className="workspace-feedback"><Spin tip="Loading accountĂ¢â‚¬Â¦" size="large"><span /></Spin></main>
+    return <main className="workspace-feedback"><Spin tip="Loading account…" size="large"><span /></Spin></main>
   }
 
   if (profile.isError) {

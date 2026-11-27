@@ -13,6 +13,14 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ConfigProvider theme={{ token: {
       colorPrimary: '#4F46E5',
+      colorPrimaryHover: '#4338CA',
+      colorPrimaryActive: '#3730A3',
+      colorLink: '#4F46E5',
+      colorError: '#B42318',
+      colorErrorHover: '#9C2119',
+      colorErrorActive: '#7A1A12',
+      colorTextPlaceholder: '#475569',
+      colorTextDescription: '#475569',
       colorText: '#16233D',
       colorTextSecondary: '#475569',
       borderRadius: 8,

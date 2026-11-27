@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq.Expressions;
 using AssetFlow.Api.Data;
 using AssetFlow.Api.Models;
+using AssetFlow.Api.Reporting;
 using Microsoft.EntityFrameworkCore;
 
 namespace AssetFlow.Api.Requests;
@@ -19,7 +20,7 @@ internal static class RequestHistory
         var entityId = id.ToString(CultureInfo.InvariantCulture);
         return scope.Where(request => request.Id == id).Select(Summary)
             .Select(request => new RequestDetail(request,
-                db.AuditEvents.Where(audit => audit.EntityType == nameof(AssetRequest) && audit.EntityId == entityId)
+                AuditFeed.Visible(db).Where(audit => audit.EntityType == nameof(AssetRequest) && audit.EntityId == entityId)
                     .OrderBy(audit => audit.OccurredAtUtc).ThenBy(audit => audit.Id)
                     .Select(audit => new RequestEvent(audit.Action, audit.OccurredAtUtc)).ToList()))
             .SingleOrDefaultAsync(cancellationToken);

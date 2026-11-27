@@ -1,5 +1,6 @@
+import { InventoryTable } from '../InventoryTable'
 import { useQuery } from '@tanstack/react-query'
-import { Empty, Table } from 'antd'
+import { Empty } from 'antd'
 import { Link, Navigate, useOutletContext } from 'react-router'
 import { InventoryError, InventorySkeleton } from '../inventory/InventoryFeedback'
 import '../inventory/inventory.css'
@@ -18,7 +19,7 @@ function AssignedList({ token }: { token: string }) {
         {assets.isError ? <div className="inventory-message">
           <InventoryError onRetry={() => void assets.refetch()}>Unable to load assigned assets.</InventoryError>
         </div> : assets.isPending ? <InventorySkeleton label="Loading assigned assets" /> : (
-          <Table<AssignedAsset> rowKey="assetId" size="middle" dataSource={assets.data} scroll={{ x: 540 }}
+          <InventoryTable<AssignedAsset> rowKey="assetId" dataSource={assets.data} scroll={{ x: 540 }}
             loading={assets.isFetching} pagination={{ pageSize: 10, hideOnSinglePage: true }}
             locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No assets assigned to you" /> }}
             columns={[

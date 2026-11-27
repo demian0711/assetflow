@@ -1,6 +1,8 @@
+import { InventoryTable } from '../InventoryTable'
+import { StatusTag } from '../StatusTag'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Empty, Input, Modal, Select, Space, Table, Tag } from 'antd'
+import { Alert, Button, Empty, Input, Modal, Select, Space } from 'antd'
 import type { TableProps } from 'antd'
 import { useState } from 'react'
 import { Link, useOutletContext } from 'react-router'
@@ -44,7 +46,7 @@ export default function AssetsPage() {
     { title: 'Category', dataIndex: 'categoryName', width: 150 },
     { title: 'Status', dataIndex: 'status', width: 125, render: (_, asset) => {
       const status = assetStatuses.find(item => item.value === asset.status)
-      return <Tag color={status?.color}>{status?.label ?? asset.status}</Tag>
+      return <StatusTag tone={status?.color} label={status?.label ?? asset.status} />
     } },
   ]
   if (isAdmin) {
@@ -94,8 +96,7 @@ export default function AssetsPage() {
             }}>Unable to load inventory.</InventoryError>
           </div>
         ) : assets.isPending ? <InventorySkeleton /> : (
-          <Table<Asset>
-            size="middle"
+          <InventoryTable<Asset>
             rowKey="id"
             columns={columns}
             dataSource={assets.data.items}

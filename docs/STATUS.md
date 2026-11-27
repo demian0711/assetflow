@@ -46,7 +46,7 @@
 | Chrome ở 1440px | Kiểm tra focus bàn phím, lỗi dưới trường, trạng thái đang đăng nhập và hồ sơ trong header và Overview. Đăng xuất rồi chuyển tài khoản lấy dữ liệu mới. Tải lại trang hoặc mô phỏng qua hạn 30 phút đều đưa về trang đăng nhập. |
 | Chrome ở 390px | Form và app shell vừa khung màn hình. Drawer mở được, liên kết Overview đóng drawer và nút Sign out đưa về trang đăng nhập. |
 
-Xem [README](../README.md) để chạy lại trên máy local. Màn hình Overview hiển thị dữ liệu tài khoản. Dashboard nghiệp vụ sẽ được triển khai khi API có dữ liệu.
+Xem [README](../README.md) để chạy lại trên máy local. Màn hình tài khoản hiện mang tên Account.
 
 ## Assets và Categories đã kiểm chứng ngày 2026-11-27
 
@@ -111,6 +111,31 @@ dotnet test tests/AssetFlow.IntegrationTests -c Release
 ```
 
 Giới hạn hiện tại. Hàng đợi lọc trạng thái trên server và phân trang ở trình duyệt. Thay đổi ở phiên khác xuất hiện khi trang tải lại dữ liệu hoặc xử lý xung đột, chưa có cập nhật đẩy theo thời gian thực.
+
+## Dashboard, Audit History và rà soát giao diện ngày 2026-11-27
+
+Dashboard Admin đọc tổng thiết bị, Available, In use và yêu cầu Pending từ PostgreSQL. Biểu đồ danh mục ghi số lượng bên cạnh mỗi thanh. Employee thấy số liệu và hoạt động trên yêu cầu của mình. Audit History dành cho Admin, lọc theo email người thao tác, hành động và loại đối tượng. API phân trang và chỉ trả metadata của những loại sự kiện đã định nghĩa. Purpose, lý do từ chối và dữ liệu nhập tự do trong log nằm ngoài dữ liệu báo cáo.
+
+| Lệnh hoặc kiểm tra | Kết quả |
+| --- | --- |
+| `dotnet build AssetFlow.slnx -c Release` | Thành công, 0 cảnh báo và 0 lỗi. |
+| `dotnet ef migrations has-pending-model-changes --no-build --configuration Release --project src/AssetFlow.Api` | Model khớp migration snapshot. |
+| `dotnet test tests/AssetFlow.IntegrationTests -c Release --no-build` | Qua 4/4 trên PostgreSQL 17.12 tạm, gồm kiểm thử cấp phát đồng thời. |
+| `node --test --test-concurrency=1 tests/assets.test.mjs tests/requests.test.mjs tests/reporting.test.mjs` | Qua 5/5. Đối chiếu số Dashboard với dữ liệu PostgreSQL. Employee nhận 403 ở Audit History và dashboard của họ chỉ có sự kiện thuộc yêu cầu của họ. |
+| `npm run lint`, `npm run typecheck` và `npm run build` trong `web/` | Đều thành công. |
+| Trạng thái giao diện | Đã thấy Dashboard loading, lỗi 503 được giả lập và nút Retry tải lại thành công. Audit History áp dụng bộ lọc, phân trang, hiển thị trạng thái trống theo bộ lọc và xóa bộ lọc. Kiểm tra bổ sung xác nhận hai sự kiện fixture có metadata bất thường được loại khỏi báo cáo. |
+
+Đã mở bản build production bằng Chrome headless ở 1440px và 390px, kết nối API thật và PostgreSQL có dữ liệu seed. Dữ liệu cho Recent Activity được tạo qua các thao tác yêu cầu và cấp phát trong phiên kiểm thử.
+
+- Cả hai vai trò tại hai kích thước. Sign in, Dashboard, Assets và Account.
+- Admin tại hai kích thước. Audit History, Categories, Admin Requests, chi tiết yêu cầu và các hộp thoại Add Asset, Add Category, Approve, Reject, Issue Asset, Receive Return.
+- Admin tại 1440px. Edit Asset, Edit Category và xác nhận Retire.
+- Employee tại hai kích thước. My Requests, chi tiết, New Request, xác nhận Cancel Request và Assigned Assets.
+- Đã kiểm tra Tab trên form đăng nhập, Escape để đóng hộp thoại, nhãn các trường, contrast và console. Ở 390px menu mở được, form nằm trong khung và cuộn ngang được giới hạn trong bảng. Đã dùng phím mũi tên để cuộn bảng Assets.
+
+Lượt Chrome cuối qua 49 màn hình và trạng thái. Console không có lỗi hoặc cảnh báo ngoài phản hồi 503 được giả lập có chủ đích. Sáu quy tắc axe về nhãn, tên điều khiển, contrast và vùng cuộn không báo vi phạm trong lượt này.
+
+Audit History hiện hiển thị sự kiện vòng đời yêu cầu và retire thiết bị.
 
 ## Quy tắc chuyển trạng thái cho chặng nghiệp vụ
 

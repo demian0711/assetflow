@@ -1,6 +1,8 @@
+import { InventoryTable } from '../InventoryTable'
+import { formatDateTime } from '../dateFormat'
 import { PlusOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Select, Table } from 'antd'
+import { Button, Empty, Select } from 'antd'
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext, useParams } from 'react-router'
 import { InventoryError, InventorySkeleton } from '../inventory/InventoryFeedback'
@@ -11,7 +13,6 @@ import { RequestDetails } from './RequestDetails'
 import { RequestStatusBadge } from './RequestStatusBadge'
 import './requests.css'
 
-const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' })
 
 function MyRequests({ token }: { token: string }) {
   const [status, setStatus] = useState<RequestStatus>()
@@ -44,7 +45,7 @@ function MyRequests({ token }: { token: string }) {
             <InventoryError onRetry={() => void requests.refetch()}>Unable to load requests.</InventoryError>
           </div>
         ) : requests.isPending ? <InventorySkeleton label="Loading requests" /> : (
-          <Table<EmployeeRequest> rowKey="id" size="middle" dataSource={requests.data} scroll={{ x: 580 }}
+          <InventoryTable<EmployeeRequest> rowKey="id" dataSource={requests.data} scroll={{ x: 580 }}
             loading={requests.isFetching} pagination={{ current: page, pageSize: 10, hideOnSinglePage: true, onChange: setPage }}
             locale={{ emptyText: (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={status ? 'No matching requests' : 'No requests yet'}>
@@ -59,7 +60,7 @@ function MyRequests({ token }: { token: string }) {
               ) },
               { title: 'Status', width: 120, render: (_, request) => <RequestStatusBadge status={request.status} /> },
               { title: 'Created', width: 130, render: (_, request) => (
-                <time dateTime={request.createdAtUtc}>{date.format(new Date(request.createdAtUtc))}</time>
+                <time dateTime={request.createdAtUtc}>{formatDateTime(request.createdAtUtc)}</time>
               ) },
               { title: 'Purpose', dataIndex: 'purpose', ellipsis: true },
             ]} />

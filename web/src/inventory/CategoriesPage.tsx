@@ -1,6 +1,7 @@
+import { InventoryTable } from '../InventoryTable'
 import { PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Drawer, Empty, Form, Input, Space, Table } from 'antd'
+import { Alert, Button, Drawer, Empty, Form, Input, Space } from 'antd'
 import { useState } from 'react'
 import { Navigate, useOutletContext } from 'react-router'
 import { ApiError } from '../auth/api'
@@ -72,7 +73,7 @@ function CategoryList({ accessToken }: { accessToken: string }) {
             Unable to load categories.
           </InventoryError></div>
         ) : categories.isPending ? <InventorySkeleton /> : (
-          <Table<Category>
+          <InventoryTable<Category>
             rowKey="id"
             dataSource={categories.data}
             loading={categories.isFetching}

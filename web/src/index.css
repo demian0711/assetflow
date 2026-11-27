@@ -20,7 +20,7 @@ body {
   background: var(--page);
 }
 
-:where(button, a, input):focus-visible {
+:where(button, a, input, textarea, [role="combobox"]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -253,4 +253,42 @@ h1 {
   .sign-in-card .ant-card-body {
     padding: var(--space-3);
   }
+}
+
+.workspace-content a {
+  color: var(--accent);
+}
+
+.status-tag.ant-tag {
+  margin-inline-end: 0;
+  border: 0;
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.status-tag--green.ant-tag { color: #14532d; background: #dcfce7; }
+.status-tag--blue.ant-tag { color: #3730a3; background: #e0e7ff; }
+.status-tag--gold.ant-tag { color: #713f12; background: #fef3c7; }
+.status-tag--red.ant-tag { color: #991b1b; background: #fee2e2; }
+.status-tag--cyan.ant-tag { color: #164e63; background: #cffafe; }
+
+.inventory-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.inventory-heading h1 {
+  margin: 0;
+}
+
+.ant-table-content table:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ant-form .ant-input-data-count {
+  color: var(--muted);
 }

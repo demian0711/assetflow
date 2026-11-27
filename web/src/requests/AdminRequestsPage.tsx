@@ -1,5 +1,7 @@
+import { InventoryTable } from '../InventoryTable'
+import { formatDateTime } from '../dateFormat'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Empty, Form, Input, Modal, Select, Space, Table } from 'antd'
+import { Alert, Button, Empty, Form, Input, Modal, Select, Space } from 'antd'
 import { useState } from 'react'
 import { Link, Navigate, useOutletContext, useParams } from 'react-router'
 import { ApiError } from '../auth/api'
@@ -13,7 +15,6 @@ import { RequestDetailCards } from './RequestDetailCards'
 import { RequestStatusBadge } from './RequestStatusBadge'
 import './requests.css'
 
-const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' })
 const labels: Record<AdminAction, string> = {
   approve: 'Approve', reject: 'Reject', issue: 'Issue Asset', return: 'Receive Return',
 }
@@ -43,7 +44,7 @@ function Queue({ token }: { token: string }) {
         {queue.isError ? <div className="inventory-message">
           <InventoryError onRetry={() => void queue.refetch()}>Unable to load the request queue.</InventoryError>
         </div> : queue.isPending ? <InventorySkeleton label="Loading requests" /> : (
-          <Table<EmployeeRequest> rowKey="id" size="middle" dataSource={queue.data} scroll={{ x: 720 }}
+          <InventoryTable<EmployeeRequest> rowKey="id" dataSource={queue.data} scroll={{ x: 720 }}
             loading={queue.isFetching} pagination={{ current: page, pageSize: 10, onChange: setPage, hideOnSinglePage: true }}
             locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={status ? 'No requests with this status' : 'No requests yet'} /> }}
             columns={[
@@ -51,7 +52,7 @@ function Queue({ token }: { token: string }) {
               { title: 'Employee', dataIndex: 'employeeEmail', width: 220 },
               { title: 'Category', dataIndex: 'categoryName', width: 160 },
               { title: 'Status', width: 112, render: (_, row) => <RequestStatusBadge status={row.status} /> },
-              { title: 'Created', render: (_, row) => <time dateTime={row.createdAtUtc}>{date.format(new Date(row.createdAtUtc))}</time> },
+              { title: 'Created', render: (_, row) => <time dateTime={row.createdAtUtc}>{formatDateTime(row.createdAtUtc)}</time> },
             ]} />
         )}
       </section>

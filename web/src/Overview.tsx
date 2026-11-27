@@ -1,15 +1,14 @@
 import { Card } from 'antd'
 import { useOutletContext } from 'react-router'
 import type { CurrentUser } from './auth/api'
-
-const accountDate = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
+import { formatDate } from './dateFormat'
 
 export default function Overview() {
   const { user } = useOutletContext<{ user: CurrentUser }>()
   return (
     <main className="workspace-content">
-      <h1>Overview</h1>
-      <Card className="account-card" title={<h2>Account</h2>}>
+      <div className="inventory-heading"><h1>Account</h1></div>
+      <Card className="account-card">
         <dl className="account-details">
           <div>
             <dt>Email</dt>
@@ -21,7 +20,7 @@ export default function Overview() {
           </div>
           <div>
             <dt>Member since</dt>
-            <dd>{accountDate.format(new Date(user.createdAtUtc))}</dd>
+            <dd>{formatDate(user.createdAtUtc)}</dd>
           </div>
         </dl>
       </Card>
