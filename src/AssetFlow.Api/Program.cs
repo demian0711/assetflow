@@ -29,7 +29,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(AuthRoles.Employee, policy => policy.RequireRole(AuthRoles.Employee).RequireClaim(JwtRegisteredClaimNames.Sub))
-    .AddPolicy(AuthRoles.Admin, policy => policy.RequireRole(AuthRoles.Admin))
+    .AddPolicy(AuthRoles.Admin, policy => policy.RequireRole(AuthRoles.Admin).RequireClaim(JwtRegisteredClaimNames.Sub))
     .AddPolicy(AuthRoles.WorkspaceMember, policy => policy.RequireRole(AuthRoles.Employee, AuthRoles.Admin));
 
 builder.Services.AddHealthChecks().AddDbContextCheck<AssetFlowDbContext>("postgresql");
@@ -63,3 +63,5 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     })
 });
 app.Run();
+
+public partial class Program { }

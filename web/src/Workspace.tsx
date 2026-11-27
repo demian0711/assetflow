@@ -1,4 +1,4 @@
-import { AppstoreOutlined, DashboardOutlined, FileTextOutlined, InboxOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, AuditOutlined, DashboardOutlined, FileTextOutlined, InboxOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Drawer, Grid, Result, Spin, Tag } from 'antd'
 import { useEffect, useState } from 'react'
@@ -17,6 +17,18 @@ function Navigation({ isAdmin, isEmployee, onNavigate }: { isAdmin: boolean; isE
         <NavLink className="nav-link" to="/requests" onClick={onNavigate}>
           <FileTextOutlined aria-hidden="true" />
           My Requests
+        </NavLink>
+      )}
+      {isEmployee && (
+        <NavLink className="nav-link" to="/assigned-assets" onClick={onNavigate}>
+          <AppstoreOutlined aria-hidden="true" />
+          Assigned Assets
+        </NavLink>
+      )}
+      {isAdmin && (
+        <NavLink className="nav-link" to="/admin/requests" onClick={onNavigate}>
+          <AuditOutlined aria-hidden="true" />
+          Admin Requests
         </NavLink>
       )}
       {isAdmin && (
@@ -68,7 +80,7 @@ export default function Workspace({ session, onLogout }: { session: Session; onL
   }, [onLogout, status])
 
   if (status === 401 || profile.isPending) {
-    return <main className="workspace-feedback"><Spin tip="Loading accountâ€¦" size="large"><span /></Spin></main>
+    return <main className="workspace-feedback"><Spin tip="Loading accountĂ¢â‚¬Â¦" size="large"><span /></Spin></main>
   }
 
   if (profile.isError) {

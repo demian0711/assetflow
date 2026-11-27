@@ -28,6 +28,7 @@ public sealed class AssetFlowDbContext(DbContextOptions<AssetFlowDbContext> opti
 
         builder.Entity<Asset>(asset =>
         {
+            asset.Property(item => item.Version).IsRowVersion();
             asset.Property(item => item.AssetCode).HasMaxLength(50);
             asset.Property(item => item.Name).HasMaxLength(150);
             asset.Property(item => item.Status).HasConversion<string>().HasMaxLength(20);
@@ -39,6 +40,8 @@ public sealed class AssetFlowDbContext(DbContextOptions<AssetFlowDbContext> opti
 
         builder.Entity<AssetRequest>(request =>
         {
+            request.Property(item => item.Version).IsRowVersion();
+            request.Property(item => item.RejectionReason).HasMaxLength(500);
             request.Property(item => item.Purpose).HasMaxLength(500);
             request.Property(item => item.Status).HasConversion<string>().HasMaxLength(20);
             request.HasIndex(item => new { item.EmployeeId, item.CreatedAtUtc });

@@ -9,6 +9,16 @@ export type EmployeeRequest = NewRequest & {
   categoryName: string
   status: RequestStatus
   createdAtUtc: string
+  employeeEmail: string | null
+  assetCode: string | null
+  rejectionReason: string | null
+}
+export type AssignedAsset = {
+  requestId: number
+  assetId: number
+  assetCode: string
+  name: string
+  categoryName: string
 }
 export type RequestDetail = {
   request: EmployeeRequest
@@ -26,6 +36,7 @@ export const requestStatuses: { value: RequestStatus; label: string; color: stri
 
 export const requestKeys = {
   list: ['requests', 'list'],
+  assigned: ['requests', 'assigned-assets'],
   detail: (id: number) => ['requests', 'detail', id],
 }
 
@@ -50,4 +61,8 @@ export function createRequest(token: string, input: NewRequest) {
 
 export function cancelRequest(token: string, id: number) {
   return authorizedRequest<RequestDetail>(token, path + '/' + id + '/cancel', { method: 'POST' })
+}
+
+export function getAssignedAssets(token: string, signal: AbortSignal) {
+  return authorizedRequest<AssignedAsset[]>(token, path + '/assigned-assets', { signal })
 }

@@ -89,6 +89,29 @@ Employee tạo yêu cầu Pending, xem và lọc danh sách của mình trong My
 node --env-file=.env --test tests/requests.test.mjs
 ```
 
+## Admin Requests và vòng đời cấp phát đã kiểm chứng ngày 2026-11-27
+
+Admin duyệt nhu cầu hoặc từ chối có lý do, chọn thiết bị Available đúng danh mục để cấp, và xác nhận nhận trả. Các action POST lưu trạng thái yêu cầu, thay đổi kho liên quan và audit trong cùng transaction. Asset và AssetRequest dùng `xmin` hệ thống của PostgreSQL làm concurrency token. Employee thấy thiết bị đang cấp cho mình trong Assigned Assets. Yêu cầu Returned giữ tham chiếu thiết bị để xem lịch sử.
+
+| Lệnh hoặc kiểm tra | Kết quả |
+| --- | --- |
+| `dotnet ef database update InitialCreate --no-build --configuration Release --project src/AssetFlow.Api`, sau đó `dotnet ef database update --no-build --configuration Release --project src/AssetFlow.Api` | Đã nâng cấp PostgreSQL 17.12 tạm lên `20261127150556_AddRequestLifecycle` và xác nhận dữ liệu có trước khi nâng cấp vẫn còn. Migration thêm `RejectionReason` và ánh xạ `xmin` sẵn có của PostgreSQL. |
+| `dotnet ef migrations has-pending-model-changes --no-build --configuration Release --project src/AssetFlow.Api` | Model khớp migration snapshot. |
+| `dotnet build AssetFlow.slnx -c Release` | Thành công, 0 cảnh báo và 0 lỗi. |
+| `dotnet test tests/AssetFlow.IntegrationTests -c Release --no-build` | Qua 4/4 trên PostgreSQL thật. Kiểm tra sai danh mục, nhận trả lặp và giữ lịch sử, lý do từ chối bắt buộc, và cấp đồng thời cùng một thiết bị. |
+| `Concurrent_issue_same_available_asset_after_both_reads_allows_exactly_one` | Interceptor giữ cả hai thao tác ngay trước khi ghi và xác nhận cả hai đã đọc Available với cùng `xmin`. Quan sát đúng một concurrency exception của EF Core, một HTTP 200 và một 409. PostgreSQL có đúng một yêu cầu Issued và một audit RequestIssued cho thiết bị. Yêu cầu còn lại vẫn Approved và chưa gán thiết bị. |
+| `node --test tests/assets.test.mjs tests/requests.test.mjs` | Qua 4/4 với API chạy trên cùng PostgreSQL thử nghiệm. |
+| `npm run lint`, `npm run typecheck` và `npm run build` trong `web/` | Đều thành công. |
+| Chrome với bản build production | Kiểm tra hàng đợi và bộ lọc Admin, nhập lý do, duyệt, chọn thiết bị bằng mã và tên, thông báo khi nhận 409, tải lại dữ liệu, cấp và nhận trả. Đã kiểm tra Assigned Assets ở 390px trước và sau nhận trả. |
+
+Để chạy lại integration test, đặt `ASSETFLOW_TEST_DB` thành chuỗi kết nối của một database PostgreSQL thử nghiệm riêng. Project test áp dụng migration, seed tài khoản thử và ghi dữ liệu fixture.
+
+```bash
+dotnet test tests/AssetFlow.IntegrationTests -c Release
+```
+
+Giới hạn hiện tại. Hàng đợi lọc trạng thái trên server và phân trang ở trình duyệt. Thay đổi ở phiên khác xuất hiện khi trang tải lại dữ liệu hoặc xử lý xung đột, chưa có cập nhật đẩy theo thời gian thực.
+
 ## Quy tắc chuyển trạng thái cho chặng nghiệp vụ
 
 - Yêu cầu bắt đầu ở `Pending`. Admin có thể duyệt sang `Approved` hoặc từ chối sang `Rejected`. Employee có thể hủy yêu cầu của mình từ `Pending` hoặc `Approved` trước khi cấp phát.

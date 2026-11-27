@@ -89,7 +89,7 @@ public sealed class AssetsController(AssetFlowDbContext db) : ControllerBase
     [Authorize(Policy = AuthRoles.Admin)]
     public async Task<ActionResult<AssetDto>> Update(int id, AssetInput input, CancellationToken cancellationToken)
     {
-        var current = await FindAsync(id, cancellationToken);
+        var current = await db.Assets.FindAsync([id], cancellationToken);
         if (current is null)
         {
             return NotFound();
@@ -106,21 +106,18 @@ public sealed class AssetsController(AssetFlowDbContext db) : ControllerBase
             return InvalidCategory();
         }
 
+        current.AssetCode = input.AssetCode.Trim().ToUpperInvariant();
+        current.Name = input.Name.Trim();
+        current.CategoryId = input.CategoryId;
         try
         {
-            var updated = await db.Assets
-                .Where(asset => asset.Id == id && asset.Status == current.Status && asset.CategoryId == current.CategoryId)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(asset => asset.AssetCode, input.AssetCode.Trim().ToUpperInvariant())
-                    .SetProperty(asset => asset.Name, input.Name.Trim())
-                    .SetProperty(asset => asset.CategoryId, input.CategoryId), cancellationToken);
-
-            if (updated == 0)
-            {
-                return Problem(statusCode: 409, detail: "The asset changed. Refresh and try again.");
-            }
+            await db.SaveChangesAsync(cancellationToken);
         }
-        catch (PostgresException error) when (InventoryProblems.IsDuplicate(error, "IX_Assets_AssetCode"))
+        catch (DbUpdateConcurrencyException)
+        {
+            return AssetChanged();
+        }
+        catch (DbUpdateException error) when (InventoryProblems.IsDuplicate(error, "IX_Assets_AssetCode"))
         {
             return DuplicateCode();
         }
@@ -132,17 +129,14 @@ public sealed class AssetsController(AssetFlowDbContext db) : ControllerBase
     [Authorize(Policy = AuthRoles.Admin)]
     public async Task<ActionResult<AssetDto>> Retire(int id, CancellationToken cancellationToken)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        var updated = await db.Assets.Where(asset => asset.Id == id && asset.Status == AssetStatus.Available)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(asset => asset.Status, AssetStatus.Retired), cancellationToken);
-
-        if (updated == 0)
+        var asset = await db.Assets.FindAsync([id], cancellationToken);
+        if (asset is null) return NotFound();
+        if (asset.Status != AssetStatus.Available)
         {
-            return await db.Assets.AnyAsync(asset => asset.Id == id, cancellationToken)
-                ? Problem(statusCode: 409, detail: "Only available assets can be retired.")
-                : NotFound();
+            return Problem(statusCode: 409, detail: "Only available assets can be retired.");
         }
 
+        asset.Status = AssetStatus.Retired;
         db.AuditEvents.Add(new AuditEvent
         {
             Action = "AssetRetired",
@@ -150,15 +144,24 @@ public sealed class AssetsController(AssetFlowDbContext db) : ControllerBase
             EntityId = id.ToString(CultureInfo.InvariantCulture),
             ActorId = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
         });
-        await db.SaveChangesAsync(cancellationToken);
-        var result = await FindAsync(id, cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return Ok(result);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return AssetChanged();
+        }
+
+        return Ok(await FindAsync(id, cancellationToken));
     }
 
     private Task<AssetDto?> FindAsync(int id, CancellationToken cancellationToken) =>
         db.Assets.AsNoTracking().Where(asset => asset.Id == id)
             .Select(AssetDto.Projection).SingleOrDefaultAsync(cancellationToken);
+
+    private ObjectResult AssetChanged() =>
+        Problem(statusCode: 409, detail: "The asset has changed. Refresh and try again.");
 
     private ObjectResult InvalidCategory() =>
         Problem(statusCode: 400, detail: "Choose an existing category.",

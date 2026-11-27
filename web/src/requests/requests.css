@@ -50,3 +50,11 @@
     padding: var(--space-2);
   }
 }
+
+.request-conflict {
+  margin-bottom: var(--space-3);
+}
+
+.admin-request-heading {
+  flex-wrap: wrap;
+}
